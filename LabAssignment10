@@ -1,9 +1,16 @@
+import java.io.*;
+import java.lang.reflect.Array;
+import java.nio.Buffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-
 public class Lab10 {
     int city;
     int[] request;
-    int[][] flights;
+    static int[][] flights;
+
+    public static final String delimiter = ",";
 
     public Lab10(String args0, String args1) {
         this.city = 0;
@@ -29,29 +36,132 @@ public class Lab10 {
     }
 
     public static int findCheapestPrice(int n, int[] request, int[][] flights_info) {
-        //TODO complete this function, remove this line when you start
-        throw new UnsupportedOperationException("Not yet implemented, remove this line when you start");
+        // find cheapest price
+        int src = request[0];
+        int dest = request[1];
+        int MAX_STOPS = request[2];
+        int[] distance = new int[n];
+        boolean[] sptSet = new boolean[n];
+        int[] stops = new int[n];
+        for(int i = 0; i < n; i++) {
+            stops[i] = 0;
+            distance[i] = Integer.MAX_VALUE;
+            sptSet[i] = false;
+        }
+        distance[src] = 0;
+        for(int i = 0; i < n-1; i++) {
+            int u = minDistance(distance,sptSet);
+            sptSet[u] = true;
+            for(int v = 0; v < n; v++) {
+                if(!sptSet[v] && flights[u][v]!=0 && distance[u]!=Integer.MAX_VALUE) {
+                    if(distance[u] + flights[u][v] < distance[v] && stops[u] <= MAX_STOPS) {
+                        stops[v] = stops[u]+1;
+                        distance[v] = distance[u] + flights[u][v];
+                    }
+                }
+            }
+        }
+        if(distance[dest] == Integer.MAX_VALUE) {
+            return -1;
+        }
+        return distance[dest];
+    }
+
+    public static int minDistance(int[] distance, boolean[] sptSet) {
+        int min = Integer.MAX_VALUE;
+        int minIndex = -1;
+        for(int i = 0; i < distance.length; i++) {
+            if(sptSet[i]==false && distance[i] <= min) {
+                min = distance[i];
+                minIndex = i;
+            }
+        }
+        return minIndex;
     }
     /*
      * read flights.csv store data in integer adjacency matrix
      * note to self: skip header line of csv file
      */
     public int[][] getFlightInfo(String file) {
-        Scanner scan = new Scanner(System.in);
+//        Scanner scan = new Scanner(file);
+//        int lineLen = countLineJava(file);
+        ArrayList<int[]> tempData = new ArrayList<int[]>();
+        int n = 0;
+        try {
+            String[] tempArr;
+            File theFile = new File(file);
+            FileReader fr = new FileReader(theFile);
+            BufferedReader br = new BufferedReader(fr);
+            String line = br.readLine();    // ignore the column headers from the csv
+            while((line = br.readLine()) != null) {
+                tempArr = line.split(delimiter);
+                int i = 0;
+                int[] threeVals = new int[3];
+                for(String tempStr : tempArr) {
+                    int value = Integer.parseInt(tempStr);
+                    threeVals[i] = value;
+                    if(value > n && i < 2) {
+                        n = value;
+                    }
+                    i++;
 
-        //TODO update your variable @city here -> number of city
+                    // n is the number of airports
+                    // figure out how many airports there are
+                    // create a placeholder outside of the for loop before all the loops n = 0
+                }
+                tempData.add(threeVals);
+            }
+            br.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        // create int[] and populate data from the arrayList
+        int[][] array = new int[n+1][n+1];
+        // after you create the array, make a double for loop to fill the array with zeroes
+        for(int i = 0; i < array.length; i++) {
+            for(int j = 0; j < array[i].length; j++) {
+                array[i][j] = 0;
+            }
+        }
+        // let's say ...
+        for(int i = 0; i < tempData.size(); i++) {
+            int[] tmp = tempData.get(i);
+            array[tmp[0]][tmp[1]] = tmp[2];
+        }
+        // update the city variable and now you have done the thing to do
+        this.city = n+1;
+        return array;
     }
 
     /*
      * read request.properties and store in int[]
+     * 10 is a placeholder value
      */
     public int[] getRequest(String file) {
-
+        // prop.load
+        // prop.getProperty
+        Properties prop = new Properties();
+        int[] array = new int[3];
+        try {
+            prop.load(new FileInputStream(file));
+            String str = prop.getProperty("request");
+            String[] temp = str.split(delimiter);
+            for(int i = 0; i < temp.length; i++) {
+                array[i] = Integer.parseInt(temp[i]);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return array;
     }
 
     /* Recommend to have*/
-    /* Convert adjacency matrix to Dikjstras algorithm */
+    /* Convert adjacency matrix to Dijkstras algorithm */
     public void generateCityGraph(int[][] flights) {
+        // do Dijkstras on flights int[][]
+        // convert the adjacency matrix into a graph
+        // they kept the data for the graph in an adjacency matrix
+        
         //TODO complete this function, remove this line when you start
         throw new UnsupportedOperationException("Not yet implemented, remove this line when you start");
     }
@@ -59,6 +169,7 @@ public class Lab10 {
     public static void main(String[] args) {
         System.out.println(args[0] + " " + args[1]);
         Lab10 test = new Lab10(args[0], args[1]);
+
         System.out.println(test);
         System.out.println("Executing request...");
         System.out.println("Cheapest price found: " + test.findCheapestPrice());
